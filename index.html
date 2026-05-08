@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>MTs Sipakatau Urekang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; width: 100vw; height: 100vh; overflow: hidden; }
+        .phone-frame { width: 100%; height: 100%; background: #f8fafc; position: relative; overflow: hidden; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Smooth Screen Transitions */
+        .screen { display: none; height: 100%; width: 100%; flex-direction: column; position: absolute; inset: 0; background: #f8fafc; overflow-y: auto; overflow-x: hidden; z-index: 10; padding-bottom: 75px;}
+        .screen.active { display: flex; animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Calling Animation */
+        @keyframes ringPulse { 
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); } 
+            70% { box-shadow: 0 0 0 20px rgba(34, 197, 94, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
+        }
+        .ringing-avatar { animation: ringPulse 2s infinite; }
+
+        /* Audio Player Progress */
+        input[type=range].audio-slider { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range].audio-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #0b5d4f; cursor: pointer; margin-top: -4px; }
+        input[type=range].audio-slider::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #cbd5e1; border-radius: 2px; }
+
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .tab-btn.active { color: #0b5d4f; }
+        .tab-btn.active .ph { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <section id="login" class="screen active z-50 bg-white" style="padding-bottom: 0;">
+        <div class="flex flex-col items-center justify-center h-full p-6 relative">
+            <div class="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                <i class="ph ph-graduation-cap text-6xl text-slate-700"></i>
+            </div>
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-slate-800 leading-tight">MTs Sipakatau Urekang</h1>
+                <p class="text-sm text-slate-500 mt-1">Sistem Penugasan Guru</p>
+            </div>
+
+            <div class="w-full space-y-5 bg-white p-6 rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Nama Guru</label>
+                    <select id="loginName" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3.5 outline-none focus:border-teal-500 transition-colors font-medium appearance-none">
+                        <option value="">Pilih nama...</option>
+    <option value="Rosma, S.Sos., M.Pd">Rosma, S.Sos., M.Pd</option>
+    <option value="Kiki Ayunanda, S.Kom">Kiki Ayunanda, S.Kom</option>
+    <option value="Munira, S.Kom">Munira, S.Kom</option>
+    <option value="Aris, S.Pd">Aris, S.Pd</option>
+    <option value="Syarifuddin, S.Pd">Syarifuddin, S.Pd</option>
+    <option value="Jaslan, S.Pd">Jaslan, S.Pd</option>
+    <option value="Hardi">Hardi</option>
+    <option value="Masliana">Masliana</option>
+    <option value="Iskandar Dinata">Iskandar Dinata</option>
+    <option value="Rosdiana">Rosdiana</option>
+    <option value="Iklasari, S.H">Iklasari, S.H</option>
+    <option value="Misrawati, S.Pd">Misrawati, S.Pd</option>
+    <option value="Syahril, S.H">Syahril, S.H</option>
+    <option value="Sarina">Sarina</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status Kehadiran</label>
+                    <div class="flex gap-3">
+                        <button id="btnHadir" onclick="setLoginPresence('hadir')" class="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold flex items-center justify-center gap-2 transition-all">
+                            <i class="ph ph-check-circle text-lg"></i> Hadir
+                        </button>
+                        <button id="btnTidak" onclick="setLoginPresence('tidak')" class="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold flex items-center justify-center gap-2 transition-all">
+                            <i class="ph ph-x-circle text-lg"></i> Tidak
+                        </button>
+                    </div>
+                </div>
+
+                <button id="btnMasuk" onclick="doLogin()" disabled class="w-full py-4 rounded-xl font-bold text-white bg-slate-300 transition-all mt-4">
+                    Masuk ke Sistem
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <div id="mainHeader" class="hidden h-[60px] bg-teal-800 text-white items-center justify-between px-4 shadow-md z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+                <i class="ph ph-buildings text-xl"></i>
+            </div>
+            <div>
+                <h1 id="headerTitle" class="font-bold text-base leading-tight">Beranda</h1>
+                <p class="text-[11px] text-teal-100 opacity-90">MTs Sipakatau Urekang</p>
+            </div>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-teal-700 flex items-center justify-center font-bold text-sm shadow-sm" id="headerAvatar">G</div>
+    </div>
+
+    <section id="beranda" class="screen bg-slate-50">
+        <div class="p-4 space-y-4">
+            <!-- Widget Check-in -->
+            <div id="checkInWidgetContainer"></div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center"><i class="ph-fill ph-clock-countdown text-xl"></i></div>
+                    <div><div class="text-2xl font-bold text-slate-800 leading-none" id="statPending">0</div><div class="text-xs text-slate-500 mt-1">Menunggu</div></div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="ph-fill ph-check-circle text-xl"></i></div>
+                    <div><div class="text-2xl font-bold text-slate-800 leading-none" id="statTaken">0</div><div class="text-xs text-slate-500 mt-1">Diambil</div></div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between mt-2 mb-1">
+                <h2 class="font-bold text-slate-800">Tugas Masuk Hari Ini</h2>
+                <span class="text-xs font-medium bg-teal-100 text-teal-800 px-2 py-1 rounded-md">Live</span>
+            </div>
+            
+            <div id="berandaTaskList" class="space-y-3 pb-4">
+                <!-- Tasks will be rendered here -->
+            </div>
+        </div>
+    </section>
+
+    <section id="tugas" class="screen bg-slate-50">
+        <div class="p-4">
+            <!-- Form Buat Tugas (Hanya tampil jika status = tidak hadir) -->
+            <div id="tugasFormContainer" class="hidden mb-6">
+                <h2 class="text-lg font-bold text-slate-800 mb-3">Kirim Tugas Pengganti</h2>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 mb-1 block">Mata Pelajaran</label>
+                            <input type="text" id="tugasMapel" placeholder="Mis: Matematika" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 mb-1 block">Kelas</label>
+                            <input type="text" id="tugasKelas" placeholder="Mis: VII A" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 mb-1 block">Judul/Topik Tugas</label>
+                        <input type="text" id="tugasJudul" placeholder="Materi yang harus dikerjakan" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 mb-1 block">Instruksi Detail</label>
+                        <textarea id="tugasIsi" rows="3" placeholder="Jelaskan instruksi untuk guru pengganti..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500 resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 mb-1 block">Lampiran (Opsional)</label>
+                        <input type="file" id="tugasMedia" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx" onchange="updateTugasMediaLabel()">
+                        <button onclick="document.getElementById('tugasMedia').click()" class="w-full border border-dashed border-slate-300 rounded-lg py-3 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-50">
+                            <i class="ph ph-upload-simple text-xl mb-1"></i>
+                            <span id="tugasMediaLabel" class="text-xs">Pilih Foto, Video, atau Dokumen</span>
+                        </button>
+                    </div>
+                    <button onclick="kirimTugasBaru()" class="w-full py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition-all shadow-md mt-2">
+                        Kirim Tugas ke Beranda
+                    </button>
+                </div>
+            </div>
+
+            <!-- Riwayat Tugas -->
+            <h2 id="tugasRiwayatTitle" class="text-lg font-bold text-slate-800 mb-3">Riwayat Tugas</h2>
+            <div id="tugasRiwayatList" class="space-y-3">
+                <!-- Riwayat di render di sini -->
+            </div>
+        </div>
+    </section>
+
+    <section id="chat" class="screen bg-[#efeae2]" style="padding-bottom: 0;">
+        <!-- Header Chat Khusus -->
+        <div class="h-[60px] bg-[#008069] text-white flex items-center justify-between px-3 shrink-0 shadow-sm z-20">
+            <div class="flex items-center gap-2">
+                <button class="p-1 -ml-1 rounded-full hover:bg-white/10" onclick="showScreen('beranda')"><i class="ph ph-arrow-left text-xl"></i></button>
+                <div class="w-9 h-9 rounded-full bg-slate-200 flex flex-shrink-0 items-center justify-center overflow-hidden border border-white/20">
+                    <img src="https://placehold.co/100x100/1e293b/ffffff?text=MTs" alt="Group" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col ml-1">
+                    <h2 class="font-bold text-base leading-tight">Grup Guru MTs</h2>
+                    <span class="text-[11px] text-white/80 line-clamp-1" id="chatMembers">Anda, Asni, Kiki, Aris...</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="startCall('video')" class="p-1 hover:bg-white/10 rounded-full"><i class="ph-fill ph-video-camera text-xl"></i></button>
+                <button onclick="startCall('audio')" class="p-1 hover:bg-white/10 rounded-full"><i class="ph-fill ph-phone text-xl"></i></button>
+                <button class="p-1 hover:bg-white/10 rounded-full"><i class="ph-fill ph-dots-three-vertical text-xl"></i></button>
+            </div>
+        </div>
+
+        <!-- Area Pesan -->
+        <div id="chatList" class="flex-1 overflow-y-auto p-3 space-y-3 no-scrollbar relative" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain;">
+            <!-- Dummy Initial Chat -->
+            <div class="flex justify-center mb-4"><span class="bg-[#e1f3fb] text-slate-600 text-[11px] px-3 py-1 rounded-lg shadow-sm">Hari ini</span></div>
+        </div>
+
+        <!-- Area Bawah Chat -->
+        <div class="shrink-0 flex flex-col z-30 pb-[90px]">
+            <!-- Kotak Balasan (Reply Composer) -->
+            <div id="replyComposer" class="hidden mx-2 mb-[-10px] pt-2 pb-3 px-2 bg-slate-50 border-l-4 border-teal-500 rounded-t-xl shadow-lg justify-between items-start relative z-10">
+                <div class="flex-1 overflow-hidden pr-2">
+                    <p id="replyName" class="text-xs font-bold text-teal-600 truncate"></p>
+                    <p id="replyTextPreview" class="text-xs text-slate-500 truncate"></p>
+                </div>
+                <button onclick="clearReply()" class="p-1 text-slate-400 hover:text-slate-600"><i class="ph ph-x"></i></button>
+            </div>
+
+            <!-- Input Area Chat -->
+            <div class="bg-transparent p-2 flex gap-2 items-end relative z-20">
+                <div class="flex-1 bg-white rounded-2xl flex items-end shadow-sm border border-slate-200">
+                    <button class="p-3 text-slate-500 hover:text-slate-700 shrink-0" onclick="document.getElementById('chatMediaInput').click()">
+                        <i class="ph ph-paperclip text-xl"></i>
+                    </button>
+                    <input type="file" id="chatMediaInput" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx" onchange="sendChatMedia(event)">
+                    <textarea id="chatInputText" rows="1" class="flex-1 bg-transparent py-3 px-1 text-sm outline-none resize-none max-h-24 overflow-y-auto no-scrollbar" placeholder="Ketik pesan..." oninput="handleChatInput()"></textarea>
+                    <button class="p-3 text-slate-500 hover:text-slate-700 shrink-0"><i class="ph ph-camera text-xl"></i></button>
+                </div>
+                
+                <button id="btnSendChat" onclick="sendChatText()" class="hidden w-[46px] h-[46px] shrink-0 rounded-full bg-[#00a884] text-white flex items-center justify-center shadow-sm transition-transform active:scale-95">
+                    <i class="ph-fill ph-paper-plane-right text-xl"></i>
+                </button>
+                
+                <button id="btnVoiceChat" onclick="toggleVoiceRecord()" class="w-[46px] h-[46px] shrink-0 rounded-full bg-[#00a884] text-white flex items-center justify-center shadow-sm transition-transform active:scale-95">
+                    <i id="voiceIcon" class="ph-fill ph-microphone text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="kehadiran" class="screen bg-slate-50">
+        <div class="p-4 space-y-3">
+            <h2 class="font-bold text-slate-800 text-lg mb-2">Daftar Kehadiran</h2>
+            <div id="hadirList" class="space-y-2">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">K</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-sm text-slate-800">Kiki Ayunanda, S.Kom</h4>
+                        <p class="text-xs text-emerald-600 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Hadir</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="profil" class="screen bg-slate-50">
+        <div class="p-6 flex flex-col items-center text-center">
+            <div class="w-24 h-24 rounded-full bg-teal-700 text-white flex items-center justify-center text-4xl font-bold mb-4 shadow-md" id="profilAvatar">G</div>
+            <h2 class="text-xl font-bold text-slate-800" id="profilName">Nama Guru</h2>
+            <p class="text-sm text-slate-500 mt-1" id="profilStatusText">Status: -</p>
+            
+            <button onclick="logout()" class="w-full mt-10 py-3 rounded-xl font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">
+                Keluar (Logout)
+            </button>
+
+
+
+
+
+
+
+        </div>
+    </section>
+
+    <nav id="bottomNav" class="hidden absolute bottom-0 left-0 right-0 h-[65px] bg-white border-t border-slate-200 flex justify-around items-center px-2 z-40 pb-2">
+        <button class="tab-btn active flex flex-col items-center gap-1 w-16 text-slate-400 transition-colors" onclick="showScreen('beranda', this)">
+            <i class="ph ph-house text-2xl"></i><span class="text-[10px] font-medium">Beranda</span>
+        </button>
+        <button class="tab-btn flex flex-col items-center gap-1 w-16 text-slate-400 transition-colors" onclick="showScreen('tugas', this)">
+            <i class="ph ph-clipboard-text text-2xl"></i><span class="text-[10px] font-medium">Tugas</span>
+        </button>
+        <button class="tab-btn flex flex-col items-center gap-1 w-16 text-slate-400 transition-colors relative" onclick="showScreen('chat', this)">
+            <i class="ph ph-chats-circle text-2xl"></i><span class="text-[10px] font-medium">Chat</span>
+            <span class="absolute top-0 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+        </button>
+        <button class="tab-btn flex flex-col items-center gap-1 w-16 text-slate-400 transition-colors" onclick="showScreen('kehadiran', this)">
+            <i class="ph ph-users text-2xl"></i><span class="text-[10px] font-medium">Hadir</span>
+        </button>
+        <button class="tab-btn flex flex-col items-center gap-1 w-16 text-slate-400 transition-colors" onclick="showScreen('profil', this)">
+            <i class="ph ph-user text-2xl"></i><span class="text-[10px] font-medium">Profil</span>
+        </button>
+    </nav>
+
+    <!-- Task Detail Modal -->
+    <div id="taskDetailModal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end justify-center transition-opacity opacity-0" onclick="closeTaskDetail(event)">
+        <div class="bg-white w-full h-[85%] rounded-t-3xl flex flex-col overflow-hidden shadow-2xl transform transition-transform translate-y-full" id="taskDetailContent" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center p-4 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-lg">Detail Tugas</h3>
+                <button onclick="closeTaskDetail()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"><i class="ph ph-x font-bold"></i></button>
+            </div>
+            <div id="taskDetailBody" class="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
+                <!-- Injected via JS -->
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50" id="taskDetailFooter">
+                <!-- Button Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Call Screen Overlay -->
+    <div id="callOverlay" class="hidden absolute inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-between py-12 transition-opacity opacity-0">
+        <div class="text-center mt-8 space-y-2 relative z-10">
+            <div class="flex items-center justify-center gap-1 text-slate-400 text-xs mb-4">
+                <i class="ph-fill ph-lock-key"></i> Terenkripsi secara end-to-end
+            </div>
+            <h2 class="text-3xl font-medium text-white" id="callName">Grup Guru MTs</h2>
+            <p class="text-slate-300" id="callStatusText">Memanggil...</p>
+        </div>
+        
+        <div class="relative w-32 h-32 my-10 z-10">
+            <div class="absolute inset-0 bg-teal-500 rounded-full opacity-20 ringing-avatar"></div>
+            <div class="absolute inset-2 bg-teal-500 rounded-full opacity-40 ringing-avatar" style="animation-delay: 0.5s"></div>
+            <img src="https://placehold.co/200x200/1e293b/ffffff?text=MTs" class="absolute inset-4 w-24 h-24 rounded-full object-cover border-2 border-slate-700 z-20">
+        </div>
+
+        <div class="bg-slate-800/80 backdrop-blur-md rounded-3xl p-6 flex gap-8 items-center justify-center mb-10 shadow-xl z-10 border border-slate-700">
+            <button class="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center text-xl"><i class="ph-fill ph-speaker-high"></i></button>
+            <button class="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center text-xl"><i class="ph-fill ph-video-camera-slash"></i></button>
+            <button class="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center text-xl"><i class="ph-fill ph-microphone-slash"></i></button>
+            <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-2xl shadow-lg transform transition active:scale-90"><i class="ph-fill ph-phone-x"></i></button>
+        </div>
+    </div>
+
+    <!-- Preview Media Modal -->
+    <div id="previewModal" class="hidden absolute inset-0 z-[110] bg-black/90 flex flex-col items-center justify-center p-4 transition-opacity opacity-0" onclick="closePreviewModal(event)">
+        <button onclick="closePreviewModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center"><i class="ph ph-x text-xl"></i></button>
+        <div id="previewContainer" class="w-full max-h-[80%] flex items-center justify-center overflow-hidden" onclick="event.stopPropagation()">
+            <!-- Injected -->
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- GLOBAL STATE ---
+    let userName = '';
+    let kehadiranGuru = ''; // 'hadir' | 'tidak'
+    let userAvatarStr = 'G';
+    
+    // Database Simulasi
+    let daftarTugas = [
+        { id: 1, sender: 'Asni, S.Kom', taker: null, time: '08:00', mapel: 'Prakarya', kelas: 'VII A', judul: 'Membuat sketsa anyaman', isi: 'Tolong arahkan siswa untuk menggambar sketsa pola anyaman bambu di buku gambar.', status: 'pending', mediaUrl: null, mediaType: null },
+        { id: 2, sender: 'Kiki Ayunanda, S.Kom', taker: 'Sri Wahyuni Fadli, SE', time: '09:15', mapel: 'TIK', kelas: 'VIII B', judul: 'Mencatat Fungsi Hardware', isi: 'Lanjutkan catatan di papan tulis tentang fungsi RAM dan ROM.', status: 'taken', mediaUrl: null, mediaType: null }
+    ];
+
+    let currentTaskMedia = null;
+    let selectedTaskIdForDetail = null;
+
+    // Check-in State
+    let isCheckedIn = false;
+    let checkInTimeStr = '';
+
+    // Chat variables
+    let replyContext = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let recordingTimer = null;
+    let recordingSeconds = 0;
+
+    // --- NAVIGATION & LOGIN ---
+    function setLoginPresence(type) {
+        kehadiranGuru = type;
+        document.getElementById('btnHadir').className = `flex-1 py-3.5 rounded-xl border font-semibold flex items-center justify-center gap-2 transition-all ${type === 'hadir' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'border-slate-200 text-slate-600'}`;
+        document.getElementById('btnTidak').className = `flex-1 py-3.5 rounded-xl border font-semibold flex items-center justify-center gap-2 transition-all ${type === 'tidak' ? 'bg-amber-50 border-amber-500 text-amber-700' : 'border-slate-200 text-slate-600'}`;
+        checkLoginReady();
+    }
+
+    document.getElementById('loginName').addEventListener('change', checkLoginReady);
+
+    function checkLoginReady() {
+        const nameVal = document.getElementById('loginName').value;
+        const btnMasuk = document.getElementById('btnMasuk');
+        if (nameVal !== '' && kehadiranGuru !== '') {
+            btnMasuk.disabled = false;
+            btnMasuk.className = 'w-full py-4 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-md transition-all mt-4';
+        } else {
+            btnMasuk.disabled = true;
+            btnMasuk.className = 'w-full py-4 rounded-xl font-bold text-white bg-slate-300 transition-all mt-4';
+        }
+    }
+
+    function doLogin() {
+        userName = document.getElementById('loginName').value;
+        userAvatarStr = userName.charAt(0).toUpperCase();
+        
+        // Setup UI globally based on user
+        document.getElementById('headerAvatar').textContent = userAvatarStr;
+        document.getElementById('profilAvatar').textContent = userAvatarStr;
+        document.getElementById('profilName').textContent = userName;
+        document.getElementById('profilStatusText').textContent = `Status: ${kehadiranGuru === 'hadir' ? 'Hadir di Sekolah' : 'Berhalangan Hadir'}`;
+
+        // Add user to "Hadir List" if hadir
+        if(kehadiranGuru === 'hadir') {
+            document.getElementById('hadirList').innerHTML += `
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">${userAvatarStr}</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-sm text-slate-800">${userName} (Anda)</h4>
+                        <p class="text-xs text-emerald-600 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Hadir</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show main interface
+        document.getElementById('mainHeader').classList.remove('hidden');
+        document.getElementById('mainHeader').classList.add('flex');
+        document.getElementById('bottomNav').classList.remove('hidden');
+        
+        // Initialize Screens Data
+        setupTugasView();
+        
+        // Go to Beranda
+        showScreen('beranda', document.querySelector('.tab-btn'));
+    }
+
+    function logout() {
+        userName = '';
+        kehadiranGuru = '';
+        isCheckedIn = false;
+        checkInTimeStr = '';
+        document.getElementById('loginName').value = '';
+        setLoginPresence('');
+        document.getElementById('mainHeader').classList.add('hidden');
+        document.getElementById('mainHeader').classList.remove('flex');
+        document.getElementById('bottomNav').classList.add('hidden');
+        showScreen('login');
+    }
+
+    function showScreen(screenId, btnElement = null) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        
+        // Update Bottom Nav Styling
+        if (btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+
+        // Handle Top Header Titles
+        const topHeader = document.getElementById('mainHeader');
+        const titleEl = document.getElementById('headerTitle');
+        if(screenId === 'login' || screenId === 'chat') {
+            topHeader.classList.add('hidden');
+            topHeader.classList.remove('flex');
+        } else {
+            topHeader.classList.remove('hidden');
+            topHeader.classList.add('flex');
+            titleEl.textContent = screenId.charAt(0).toUpperCase() + screenId.slice(1);
+        }
+
+        if(screenId === 'beranda') renderBeranda();
+        if(screenId === 'tugas') renderTugasRiwayat();
+    }
+
+    // --- TUGAS LOGIC ---
+    function setupTugasView() {
+        const formContainer = document.getElementById('tugasFormContainer');
+        const riwayatTitle = document.getElementById('tugasRiwayatTitle');
+        
+        if (kehadiranGuru === 'tidak') {
+            formContainer.classList.remove('hidden');
+            riwayatTitle.textContent = 'Riwayat Tugas Dikirim';
+        } else {
+            formContainer.classList.add('hidden');
+            riwayatTitle.textContent = 'Riwayat Tugas Diambil';
+        }
+    }
+
+    function updateTugasMediaLabel() {
+        const fileInput = document.getElementById('tugasMedia');
+        const label = document.getElementById('tugasMediaLabel');
+        if (fileInput.files.length > 0) {
+            currentTaskMedia = fileInput.files[0];
+            label.textContent = currentTaskMedia.name;
+            label.classList.add('text-teal-600', 'font-medium');
+        } else {
+            currentTaskMedia = null;
+            label.textContent = "Pilih Foto, Video, atau Dokumen";
+            label.classList.remove('text-teal-600', 'font-medium');
+        }
+    }
+
+    function getCurrentTimeStr() {
+        const now = new Date();
+        return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    }
+
+    function kirimTugasBaru() {
+        const mapel = document.getElementById('tugasMapel').value.trim();
+        const kelas = document.getElementById('tugasKelas').value.trim();
+        const judul = document.getElementById('tugasJudul').value.trim();
+        const isi = document.getElementById('tugasIsi').value.trim();
+
+        if(!mapel || !kelas || !judul || !isi) {
+            alert('Mohon lengkapi semua kolom tugas (Mata Pelajaran, Kelas, Judul, Isi).');
+            return;
+        }
+
+        let mediaUrl = null;
+        let mediaType = null;
+        if (currentTaskMedia) {
+            mediaUrl = URL.createObjectURL(currentTaskMedia);
+            mediaType = currentTaskMedia.type.startsWith('image/') ? 'image' : 
+                        currentTaskMedia.type.startsWith('video/') ? 'video' : 'file';
+        }
+
+        const newTask = {
+            id: Date.now(),
+            sender: userName,
+            taker: null,
+            time: getCurrentTimeStr(),
+            mapel: mapel,
+            kelas: kelas,
+            judul: judul,
+            isi: isi,
+            status: 'pending',
+            mediaUrl: mediaUrl,
+            mediaType: mediaType
+        };
+
+        // Add to front of array
+        daftarTugas.unshift(newTask);
+
+        // Reset form
+        document.getElementById('tugasMapel').value = '';
+        document.getElementById('tugasKelas').value = '';
+        document.getElementById('tugasJudul').value = '';
+        document.getElementById('tugasIsi').value = '';
+        document.getElementById('tugasMedia').value = '';
+        updateTugasMediaLabel();
+
+        alert('Tugas berhasil dikirim ke Beranda!');
+        renderTugasRiwayat();
+        // Option to auto-redirect to beranda
+        // showScreen('beranda', document.querySelectorAll('.tab-btn')[0]);
+    }
+
+    function renderBeranda() {
+        renderCheckInWidget(); // Memanggil widget check-in
+        
+        const container = document.getElementById('berandaTaskList');
+        container.innerHTML = '';
+        
+        let pendingCount = 0;
+        let takenCount = 0;
+
+        daftarTugas.forEach(task => {
+            if(task.status === 'pending') pendingCount++;
+            if(task.status === 'taken') takenCount++;
+
+            const statusClass = task.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
+            const statusText = task.status === 'pending' ? 'Menunggu' : 'Diambil';
+            const borderClass = task.status === 'pending' ? 'border-amber-300' : 'border-emerald-300';
+            const takerText = task.status === 'taken' ? `<p class="text-[10px] text-emerald-600 mt-1 font-medium"><i class="ph-fill ph-check-circle"></i> Oleh: ${task.taker}</p>` : '';
+
+            container.innerHTML += `
+                <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 ${borderClass} border-y border-r border-slate-100 active:bg-slate-50 transition-colors" onclick="openTaskDetail(${task.id})">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-md">${task.kelas}</span>
+                            <span class="text-[10px] font-bold ${statusClass} px-2 py-1 rounded-md">${statusText}</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400"><i class="ph ph-clock"></i> ${task.time}</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm mb-1">${task.judul}</h3>
+                    <p class="text-[11px] text-slate-500 mb-1 line-clamp-2">${task.isi}</p>
+                    <div class="flex justify-between items-end mt-2">
+                        <p class="text-[10px] font-medium text-slate-400 flex items-center gap-1"><i class="ph-fill ph-user"></i> ${task.sender.split(',')[0]}</p>
+                        ${task.mediaUrl ? '<i class="ph ph-paperclip text-slate-400"></i>' : ''}
+                    </div>
+                    ${takerText}
+                </div>
+            `;
+        });
+
+        document.getElementById('statPending').textContent = pendingCount;
+        document.getElementById('statTaken').textContent = takenCount;
+    }
+
+    function renderTugasRiwayat() {
+        const container = document.getElementById('tugasRiwayatList');
+        container.innerHTML = '';
+        
+        let filteredTasks = [];
+        if (kehadiranGuru === 'tidak') {
+            filteredTasks = daftarTugas.filter(t => t.sender === userName);
+        } else {
+            filteredTasks = daftarTugas.filter(t => t.taker === userName);
+        }
+
+        if(filteredTasks.length === 0) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10 bg-white rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <div class="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-3"><i class="ph ph-folder-open text-2xl"></i></div>
+                    <p class="text-sm text-slate-500 font-medium">Belum ada riwayat tugas</p>
+                </div>
+            `;
+            return;
+        }
+
+        filteredTasks.forEach(task => {
+            const statusClass = task.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
+            const statusText = task.status === 'pending' ? 'Belum Diambil' : `Diambil ${task.taker ? task.taker.split(',')[0] : ''}`;
+            
+            container.innerHTML += `
+                <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100" onclick="openTaskDetail(${task.id})">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded">${task.kelas} - ${task.mapel}</span>
+                        <span class="text-[10px] font-bold ${statusClass} px-2 py-0.5 rounded">${statusText}</span>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm mt-1">${task.judul}</h4>
+                </div>
+            `;
+        });
+    }
+
+    function openTaskDetail(taskId) {
+        const task = daftarTugas.find(t => t.id === taskId);
+        if(!task) return;
+        selectedTaskIdForDetail = taskId;
+
+        const body = document.getElementById('taskDetailBody');
+        const footer = document.getElementById('taskDetailFooter');
+        
+        // Build Media HTML
+        let mediaHtml = '';
+        if(task.mediaUrl) {
+            mediaHtml = `<div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <p class="text-xs font-bold text-slate-500 mb-2">Lampiran File:</p>`;
+            
+            if(task.mediaType === 'image') {
+                mediaHtml += `<img src="${task.mediaUrl}" class="w-full h-auto rounded-lg" onclick="openPreviewModal('image', '${task.mediaUrl}')">`;
+            } else if(task.mediaType === 'video') {
+                mediaHtml += `<button onclick="openPreviewModal('video', '${task.mediaUrl}')" class="w-full py-3 bg-slate-800 text-white rounded-lg text-sm flex items-center justify-center gap-2"><i class="ph-fill ph-play-circle text-lg"></i> Putar Video</button>`;
+            } else {
+                mediaHtml += `<button onclick="window.open('${task.mediaUrl}')" class="w-full py-3 bg-teal-50 text-teal-700 rounded-lg text-sm font-medium border border-teal-200 flex items-center justify-center gap-2"><i class="ph-fill ph-file-text text-lg"></i> Download File</button>`;
+            }
+            mediaHtml += `</div>`;
+        }
+
+        body.innerHTML = `
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold">${task.sender.charAt(0)}</div>
+                <div>
+                    <p class="text-sm font-bold text-slate-800">${task.sender}</p>
+                    <p class="text-[10px] text-slate-500">Dikirim ${task.time}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="bg-slate-50 p-2 rounded-lg border border-slate-100"><p class="text-[10px] text-slate-500 uppercase font-bold">Mapel</p><p class="text-sm font-semibold text-slate-800">${task.mapel}</p></div>
+                <div class="bg-slate-50 p-2 rounded-lg border border-slate-100"><p class="text-[10px] text-slate-500 uppercase font-bold">Kelas</p><p class="text-sm font-semibold text-slate-800">${task.kelas}</p></div>
+            </div>
+            <div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">${task.judul}</h4>
+                <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-100 text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">${task.isi}</div>
+            </div>
+            ${mediaHtml}
+        `;
+
+        // Footer Buttons
+        if (kehadiranGuru === 'hadir' && task.status === 'pending' && task.sender !== userName) {
+            footer.innerHTML = `<button onclick="ambilTugasSekarang()" class="w-full py-3.5 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-md flex items-center justify-center gap-2"><i class="ph-fill ph-hand-grabbing text-lg"></i> Ambil Tugas Ini</button>`;
+        } else if (task.status === 'taken') {
+             footer.innerHTML = `<div class="w-full py-3 rounded-xl font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 text-center flex justify-center items-center gap-2"><i class="ph-fill ph-check-circle"></i> Diambil oleh ${task.taker.split(',')[0]}</div>`;
+        } else {
+             footer.innerHTML = `<button onclick="closeTaskDetail()" class="w-full py-3 rounded-xl font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 transition-colors">Tutup</button>`;
+        }
+
+        const modal = document.getElementById('taskDetailModal');
+        const content = document.getElementById('taskDetailContent');
+        modal.classList.remove('hidden');
+        // Trigger reflow
+        void modal.offsetWidth;
+        modal.classList.remove('opacity-0');
+        content.classList.remove('translate-y-full');
+    }
+
+    function closeTaskDetail(e) {
+        if(e && e.target.id !== 'taskDetailModal') return;
+        const modal = document.getElementById('taskDetailModal');
+        const content = document.getElementById('taskDetailContent');
+        
+        modal.classList.add('opacity-0');
+        content.classList.add('translate-y-full');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function ambilTugasSekarang() {
+        const task = daftarTugas.find(t => t.id === selectedTaskIdForDetail);
+        if(task && task.status === 'pending') {
+            task.status = 'taken';
+            task.taker = userName;
+            alert('Tugas berhasil diambil! Silakan cek di menu Tugas Anda.');
+            closeTaskDetail();
+            renderBeranda();
+        }
+    }
+
+    function handleChatInput() {
+        const input = document.getElementById('chatInputText');
+        const btnSend = document.getElementById('btnSendChat');
+        const btnVoice = document.getElementById('btnVoiceChat');
+        
+        if (input.value.trim().length > 0) {
+            btnSend.classList.remove('hidden');
+            btnVoice.classList.add('hidden');
+        } else {
+            btnSend.classList.add('hidden');
+            btnVoice.classList.remove('hidden');
+        }
+    }
+
+    function appendMessage(nodeHtml, isMe = true, replyRef = null) {
+        const chatList = document.getElementById('chatList');
+        
+        let replyHtml = '';
+        if(replyRef) {
+            replyHtml = `
+            <div class="bg-black/5 border-l-4 border-[#00a884] p-1.5 rounded mb-1.5">
+                <p class="text-[10px] font-bold text-[#00a884] mb-0.5">${replyRef.name}</p>
+                <p class="text-[10px] text-slate-600 truncate">${replyRef.text}</p>
+            </div>`;
+        }
+
+        const msgClass = isMe ? 'bg-[#d9fdd3] self-end rounded-tr-none ml-10' : 'bg-white self-start rounded-tl-none mr-10';
+        const avatarHtml = isMe ? '' : `<div class="w-7 h-7 rounded-full bg-teal-600 text-white flex shrink-0 items-center justify-center text-[10px] font-bold mt-1 shadow-sm">G</div>`;
+        const myAvatarHtml = isMe ? `<div class="w-7 h-7 rounded-full bg-slate-600 text-white flex shrink-0 items-center justify-center text-[10px] font-bold mt-1 shadow-sm">${userAvatarStr}</div>` : '';
+        const senderName = isMe ? '' : `<p class="text-[11px] font-bold text-[#0b5d4f] mb-0.5">Guru Lain</p>`;
+        
+        const html = `
+            <div class="flex gap-1.5 w-full chat-row" style="transition: transform 0.2s ease-out">
+                ${avatarHtml}
+                <div class="${msgClass} p-2 rounded-xl shadow-[0_1px_1px_rgba(0,0,0,0.1)] relative group flex-1 max-w-[85%] chat-bubble" data-sender="${isMe ? 'Anda' : 'Guru Lain'}">
+                    ${senderName}
+                    ${replyHtml}
+                    <div class="text-[13px] text-slate-800 leading-snug break-words bubble-content">${nodeHtml}</div>
+                    <div class="text-[9px] text-slate-400 text-right mt-1.5 flex items-center justify-end gap-1">
+                        ${getCurrentTimeStr()} ${isMe ? '<i class="ph-fill ph-checks text-blue-500 text-[11px]"></i>' : ''}
+                    </div>
+                </div>
+                ${myAvatarHtml}
+            </div>
+        `;
+        
+        chatList.insertAdjacentHTML('beforeend', html);
+        chatList.scrollTop = chatList.scrollHeight;
+        attachSwipeToReply();
+    }
+
+    function sendChatText() {
+        const input = document.getElementById('chatInputText');
+        const text = input.value.trim();
+        if(!text) return;
+        
+        // Escape HTML
+        const safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        appendMessage(safeText, true, replyContext);
+        
+        input.value = '';
+        clearReply();
+        handleChatInput(); // reset buttons
+    }
+
+    function clearReply() {
+        replyContext = null;
+        document.getElementById('replyComposer').classList.add('hidden');
+        document.getElementById('replyComposer').classList.remove('flex');
+    }
+
+    function sendChatMedia(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const fileUrl = URL.createObjectURL(file);
+        let mediaHtml = '';
+
+        if (file.type.startsWith('image/')) {
+            mediaHtml = `<img src="${fileUrl}" class="w-full max-w-[220px] rounded-lg cursor-pointer border border-black/10 shadow-sm" onclick="openPreviewModal('image', '${fileUrl}')" alt="Sent Image">`;
+        } else if (file.type.startsWith('video/')) {
+            mediaHtml = `<div class="relative w-full max-w-[220px] rounded-lg overflow-hidden border border-black/10 bg-black cursor-pointer shadow-sm" onclick="openPreviewModal('video', '${fileUrl}')">
+                            <video src="${fileUrl}" class="w-full h-auto opacity-70"></video>
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <i class="ph-fill ph-play-circle text-white text-5xl drop-shadow-lg"></i>
+                            </div>
+                         </div>`;
+        } else {
+            mediaHtml = `
+                <div class="flex items-center gap-2.5 bg-white/60 p-2 rounded-lg cursor-pointer hover:bg-white/80 transition-colors border border-black/5" onclick="window.open('${fileUrl}')">
+                    <div class="w-10 h-10 shrink-0 rounded-md bg-teal-500 text-white flex items-center justify-center shadow-sm">
+                        <i class="ph-fill ph-file-text text-xl"></i>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-xs font-bold text-slate-800 truncate">${file.name}</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wide mt-0.5">${file.name.split('.').pop()} • ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        appendMessage(mediaHtml, true, replyContext);
+        clearReply();
+        event.target.value = ''; // Reset input agar file yang sama bisa dipilih lagi jika perlu
+    }
+
+    function attachSwipeToReply() {
+        const rows = document.querySelectorAll('.chat-row');
+        rows.forEach(row => {
+            if(row.dataset.swipable === 'true') return;
+            row.dataset.swipable = 'true';
+            
+            let startX = 0;
+            let currentX = 0;
+            let isDragging = false;
+            const bubble = row.querySelector('.chat-bubble');
+
+            row.addEventListener('touchstart', e => {
+                startX = e.touches[0].clientX;
+                isDragging = true;
+                bubble.style.transition = 'none';
+            }, {passive: true});
+
+            row.addEventListener('touchmove', e => {
+                if(!isDragging) return;
+                currentX = e.touches[0].clientX - startX;
+                // Only allow swipe right
+                if(currentX > 0 && currentX < 80) {
+                    bubble.style.transform = `translateX(${currentX}px)`;
+                }
+            }, {passive: true});
+
+            row.addEventListener('touchend', e => {
+                isDragging = false;
+                bubble.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                bubble.style.transform = 'translateX(0px)';
+                
+                if(currentX > 50) {
+                    // Trigger reply
+                    if('vibrate' in navigator) navigator.vibrate(50);
+                    const sender = bubble.dataset.sender;
+                    
+                    // Extract text content safely (ignoring reply boxes inside it)
+                    const contentNode = bubble.querySelector('.bubble-content');
+                    let text = contentNode.innerText.trim().substring(0, 40) + '...';
+                    if(contentNode.querySelector('img')) text = '📷 Foto';
+                    if(contentNode.querySelector('.audio-player-ui')) text = '🎤 Pesan Suara';
+                    
+                    replyContext = { name: sender, text: text };
+                    document.getElementById('replyName').textContent = `Balas ke ${sender}`;
+                    document.getElementById('replyTextPreview').textContent = text;
+                    document.getElementById('replyComposer').classList.remove('hidden');
+                    document.getElementById('replyComposer').classList.add('flex');
+                    document.getElementById('chatInputText').focus();
+                }
+                currentX = 0;
+            });
+        });
+    }
+
+    async function toggleVoiceRecord() {
+        const icon = document.getElementById('voiceIcon');
+        const btn = document.getElementById('btnVoiceChat');
+        
+        if(!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    clearInterval(recordingTimer);
+                    const audioBlob = new Blob(audioChunks, {type: 'audio/webm'});
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    // Build Custom Audio Player HTML
+                    const playerId = 'audio_' + Date.now();
+                    const audioHtml = `
+                        <div class="audio-player-ui flex items-center gap-2 w-[220px]" id="${playerId}_wrap">
+                            <audio id="${playerId}" src="${audioUrl}" ontimeupdate="updateAudioProgress('${playerId}')" onended="resetAudioProgress('${playerId}')"></audio>
+                            <button onclick="togglePlayAudio('${playerId}')" class="w-10 h-10 shrink-0 rounded-full bg-teal-600 text-white flex items-center justify-center text-lg shadow-sm" id="${playerId}_btn">
+                                <i class="ph-fill ph-play"></i>
+                            </button>
+                            <div class="flex-1 flex flex-col justify-center">
+                                <input type="range" id="${playerId}_slider" class="audio-slider w-full" value="0" min="0" max="100" onchange="seekAudio('${playerId}', this.value)">
+                                <div class="flex justify-between text-[9px] text-slate-500 font-medium mt-1">
+                                    <span id="${playerId}_time">0:00</span>
+                                    <span>${formatSeconds(recordingSeconds)}</span>
+                                </div>
+                            </div>
+                            <div class="w-7 h-7 rounded-full bg-slate-200 overflow-hidden shrink-0"><img src="https://placehold.co/100x100/0f172a/ffffff?text=${userAvatarStr}" class="w-full h-full object-cover"></div>
+                        </div>
+                    `;
+                    appendMessage(audioHtml, true, replyContext);
+                    clearReply();
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                recordingSeconds = 0;
+                
+                // UI changes for recording
+                btn.classList.replace('bg-[#00a884]', 'bg-red-500');
+                icon.classList.replace('ph-microphone', 'ph-stop');
+                btn.classList.add('animate-pulse');
+                
+                recordingTimer = setInterval(() => { recordingSeconds++; }, 1000);
+            } catch(err) {
+                alert('Izin mikrofon diperlukan untuk mengirim pesan suara.');
+            }
+        } else {
+            mediaRecorder.stop();
+            isRecording = false;
+            btn.classList.replace('bg-red-500', 'bg-[#00a884]');
+            icon.classList.replace('ph-stop', 'ph-microphone');
+            btn.classList.remove('animate-pulse');
+        }
+    }
+
+    function formatSeconds(s) {
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function togglePlayAudio(id) {
+        const audio = document.getElementById(id);
+        const btn = document.getElementById(id + '_btn');
+        if(audio.paused) {
+            audio.play();
+            btn.innerHTML = '<i class="ph-fill ph-pause"></i>';
+        } else {
+            audio.pause();
+            btn.innerHTML = '<i class="ph-fill ph-play"></i>';
+        }
+    }
+
+    function updateAudioProgress(id) {
+        const audio = document.getElementById(id);
+        const slider = document.getElementById(id + '_slider');
+        const timeDisplay = document.getElementById(id + '_time');
+        
+        if (audio.duration && !isNaN(audio.duration) && audio.duration !== Infinity) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            slider.value = progress;
+        }
+        timeDisplay.textContent = formatSeconds(audio.currentTime);
+    }
+
+    function seekAudio(id, value) {
+        const audio = document.getElementById(id);
+        if (audio.duration && !isNaN(audio.duration) && audio.duration !== Infinity) {
+            const seekTo = audio.duration * (value / 100);
+            audio.currentTime = seekTo;
+        }
+    }
+
+    function resetAudioProgress(id) {
+        document.getElementById(id + '_btn').innerHTML = '<i class="ph-fill ph-play"></i>';
+        document.getElementById(id + '_slider').value = 0;
+        document.getElementById(id + '_time').textContent = '0:00';
+    }
+
+    function startCall(type) {
+        const overlay = document.getElementById('callOverlay');
+        const statusText = document.getElementById('callStatusText');
+        
+        // Setup UI
+        if(type === 'video') {
+            overlay.style.backgroundImage = "url('https://placehold.co/400x800/1e293b/ffffff?text=Camera+On')";
+            overlay.style.backgroundSize = "cover";
+        } else {
+            overlay.style.backgroundImage = "none";
+        }
+
+        overlay.classList.remove('hidden');
+        // Trigger reflow
+        void overlay.offsetWidth;
+        overlay.classList.remove('opacity-0');
+        
+        statusText.textContent = "Memanggil...";
+        
+        setTimeout(() => {
+            if(!overlay.classList.contains('hidden')) {
+                statusText.textContent = "Berdering...";
+            }
+        }, 3000);
+    }
+
+    function endCall() {
+        const overlay = document.getElementById('callOverlay');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+    }
+
+    function openPreviewModal(type, url) {
+        const modal = document.getElementById('previewModal');
+        const container = document.getElementById('previewContainer');
+        
+        container.innerHTML = '';
+        if(type === 'image') {
+            container.innerHTML = `<img src="${url}" class="max-w-full max-h-[70vh] rounded-xl object-contain">`;
+        } else if(type === 'video') {
+            container.innerHTML = `<video src="${url}" controls autoplay class="max-w-full max-h-[70vh] rounded-xl outline-none"></video>`;
+        }
+        
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        modal.classList.remove('opacity-0');
+    }
+
+    function closePreviewModal(e) {
+        if(e && e.target.id !== 'previewModal' && e.target.tagName !== 'BUTTON') return;
+        const modal = document.getElementById('previewModal');
+        modal.classList.add('opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.getElementById('previewContainer').innerHTML = '';
+        }, 300);
+    }
+
+    // --- LOGIKA CHECK-IN ---
+    function renderCheckInWidget() {
+        const container = document.getElementById('checkInWidgetContainer');
+        if(!container) return;
+
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = now.toLocaleDateString('id-ID', dateOptions);
+
+        if(isCheckedIn) {
+            container.className = "bg-emerald-50 p-4 rounded-2xl shadow-sm border border-emerald-200 transition-all";
+            container.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-inner">
+                            <i class="ph-fill ph-check-circle text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">Sudah Check-in</h3>
+                            <p class="text-[11px] text-emerald-600 font-medium mt-0.5">${dateStr}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-0.5">Waktu</p>
+                        <p class="text-xl font-bold text-slate-800 leading-none">${checkInTimeStr}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            container.className = "bg-white p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden z-10 transition-all";
+            container.innerHTML = `
+                <div class="absolute top-0 right-0 w-32 h-32 bg-teal-50/50 rounded-bl-full -z-10"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-[11px] text-slate-500 font-medium mb-1">${dateStr}</p>
+                        <h3 class="font-bold text-slate-800 text-base">Kehadiran Hari Ini</h3>
+                    </div>
+                    <div class="w-9 h-9 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-sm">
+                        <i class="ph-fill ph-map-pin text-lg"></i>
+                    </div>
+                </div>
+                <button onclick="performCheckIn()" class="w-full py-3.5 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <i class="ph-bold ph-fingerprint text-xl"></i> Check-in Sekarang
+                </button>
+            `;
+        }
+    }
+
+    function performCheckIn() {
+        isCheckedIn = true;
+        checkInTimeStr = getCurrentTimeStr();
+        renderCheckInWidget();
+        
+        // Jika sebelumnya di awal memilih "Tidak", otomatis ubah jadi "Hadir" setelah check-in
+        if(kehadiranGuru === 'tidak') {
+            kehadiranGuru = 'hadir';
+            document.getElementById('profilStatusText').textContent = 'Status: Hadir di Sekolah';
+            
+            // Update daftar hadir jika belum ada
+            const hadirList = document.getElementById('hadirList');
+            if(!hadirList.innerHTML.includes(userName)) {
+                hadirList.innerHTML += `
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">${userAvatarStr}</div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm text-slate-800">${userName} (Anda)</h4>
+                            <p class="text-xs text-emerald-600 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Hadir (Cek-in)</p>
+                        </div>
+                    </div>
+                `;
+            }
+            // Update UI Tugas (menyembunyikan form "Kirim Tugas Pengganti" karena status sudah Hadir)
+            setupTugasView();
+        }
+    }
+
+</script>
+
+
+
+
+
+
+
+</body>
+</html>
